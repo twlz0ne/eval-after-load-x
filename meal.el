@@ -4,8 +4,8 @@
 
 ;; Author: Gong Qijian <gongqijian@gmail.com>
 ;; Created: 2019/11/20
-;; Version: 0.1.0
-;; Package-Requires: ((emacs "24.4") (dash "2.0"))
+;; Version: 0.2.0
+;; Package-Requires: ((emacs "25.1"))
 ;; URL: https://github.com/twlz0ne/meal.el
 ;; Keywords: tool
 
@@ -47,10 +47,11 @@
 ;;; Change Log:
 
 ;;  0.1.0  2019/11/20  Initial version.
+;;  0.2.0  2019/11/21  Remove dependency on dash-el, drop support for Emacs 24.
 
 ;;; Code:
 
-(require 'dash)
+(require 'cl-seq)
 
 (defvar meal-alist '()
   "An alist of functions to be evalled when particular files are loaded.
@@ -69,9 +70,31 @@ Each element looks like (SYMBOL LOAD-FUNC)")
 (defmacro meal--through-fn-featurep (form)
   `(meal--through-fn featurep ,form))
 
+(defalias 'meal--flatten
+  (if (fboundp 'flatten-tree) 'flatten-tree
+    ;; From Emacs 27 nightly:
+    ;; https://emba.gnu.org/emacs/emacs/commit/36b05dc84247db1391a423df94e4b9a478e29dc5
+    (lambda (tree)
+      "Return a \"flattened\" copy of TREE.
+In other words, return a list of the non-nil terminal nodes, or
+leaves, of the tree of cons cells rooted at TREE.  Leaves in the
+returned list are in the same order as in TREE.
+
+\(flatten-tree \\='(1 (2 . 3) nil (4 5 (6)) 7))
+=> (1 2 3 4 5 6 7)"
+      (let (elems)
+        (while (consp tree)
+          (let ((elem (pop tree)))
+            (while (consp elem)
+              (push (cdr elem) tree)
+              (setq elem (car elem)))
+            (if elem (push elem elems))))
+        (if tree (push tree elems))
+        (nreverse elems)))))
+
 (defun meal (fn expr form)
   (if (listp expr)
-      (let* ((files (--remove (memq it '(and or)) (-flatten expr)))
+      (let* ((files (cl-remove-if (lambda (it) (memq it '(and or))) (meal--flatten expr)))
              (cond (macroexpand-all `(meal--through-fn-featurep ,expr)))
              (fun-sym (make-symbol "meal-helper"))
              (fun-def (lambda () (funcall form)))

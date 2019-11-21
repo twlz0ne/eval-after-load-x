@@ -1,7 +1,7 @@
 EMACS ?= emacs
 ELS = meal.el
 ELCS = meal.elc
-TEST_ELS = cask-bootstrap.el meal-test.el
+TEST_ELS = meal-test.el
 
 # If the first argument is "test"...
 ifeq (test, $(firstword $(MAKECMDGOALS)))
@@ -14,7 +14,7 @@ endif
 all: clean compile test
 
 %.elc:%.el
-	$(EMACS) -batch -L . -l cask-bootstrap.el -f batch-byte-compile $(ELS)
+	$(EMACS) -batch -L . -f batch-byte-compile $(ELS)
 
 compile:$(ELCS)
 

@@ -6,8 +6,7 @@ Multi-file support for `eval-after-load`.
 
 ## Requirements
 
-- Emacs 24.4+
-- dash-el 2.0+
+- Emacs 25.1+
 
 ## Installation
 
